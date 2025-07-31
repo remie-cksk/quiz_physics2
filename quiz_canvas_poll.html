@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>កម្មវិធីសំណួររូបវិទ្យា</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .quiz-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .question-area {
+            background-color: #eef2ff; /* Light blue background for question */
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-gray-700 */
+            text-align: left;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .option-button {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #4b5563; /* text-gray-700 */
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+            border: 2px solid transparent;
+            text-align: left;
+            word-wrap: break-word; /* Ensure long text wraps */
+        }
+        .option-button:hover:not(.selected):not(.correct):not(.incorrect) {
+            background-color: #e5e7eb; /* hover:bg-gray-200 */
+            transform: translateY(-2px);
+        }
+        .option-button.selected {
+            border-color: #6366f1; /* border-indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        .option-button.correct {
+            background-color: #d1fae5; /* bg-green-100 */
+            border-color: #10b981; /* border-green-500 */
+            color: #065f46; /* text-green-800 */
+        }
+        .option-button.incorrect {
+            background-color: #fee2e2; /* bg-red-100 */
+            border-color: #ef4444; /* border-red-500 */
+            color: #991b1b; /* text-red-800 */
+        }
+        .feedback-area {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            text-align: left;
+            font-size: 0.95rem;
+            color: #374151;
+            background-color: #fef3c7; /* bg-yellow-100 for rationale */
+            border: 1px solid #f59e0b; /* border-yellow-500 */
+            display: none; /* Hidden by default */
+        }
+        .hint-area {
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #4b5563;
+            background-color: #e0f2fe; /* bg-blue-100 for hint */
+            border: 1px solid #38bdf8; /* border-blue-400 */
+            display: none; /* Hidden by default */
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .nav-button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+            border: none;
+            flex-grow: 1;
+        }
+        .nav-button:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        .nav-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+        }
+        .nav-button:disabled {
+            background-color: #9ca3af; /* bg-gray-400 */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .score-area {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-top: 20px;
+        }
+        .restart-button {
+            background-color: #10b981; /* bg-green-500 */
+            margin-top: 20px;
+        }
+        .restart-button:hover {
+            background-color: #059669; /* hover:bg-green-600 */
+        }
+        .grade-selector {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .grade-selector label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+        .grade-selector select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #cbd5e1;
+            font-size: 1rem;
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+        .grade-selector select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+
+        /* MathJax styling for LaTeX rendering */
+        .question-area .MathJax_Display {
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 1.125rem !important; /* Ensure consistent font size */
+        }
+        .option-button .MathJax_Display {
+            display: inline-block !important; /* Ensure inline display for options */
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    </style>
+    <!-- MathJax for LaTeX rendering -->
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">កម្មវិធីសំណួររូបវិទ្យា</h1>
+
+        <div class="grade-selector">
+            <label for="gradeSelect">ជ្រើសរើសថ្នាក់រៀន:</label>
+            <select id="gradeSelect">
+                <option value="7">ថ្នាក់ទី 7</option>
+                <option value="8">ថ្នាក់ទី 8</option>
+                <option value="9">ថ្នាក់ទី 9</option>
+            </select>
+        </div>
+
+        <p class="text-gray-600 mb-6" id="quizStatus">សំណួរទី <span id="currentQuestionNumber">1</span> នៃ <span id="totalQuestions"></span></p>
+
+        <div class="question-area" id="questionText">
+            <!-- Question will be injected here -->
+        </div>
+
+        <div class="options-grid" id="answerOptions">
+            <!-- Answer options will be injected here -->
+        </div>
+
+        <div class="hint-area" id="hintArea">
+            <span class="font-semibold">ជំនួយ៖</span> <span id="hintText"></span>
+        </div>
+
+        <div class="feedback-area" id="feedbackArea">
+            <span class="font-semibold">ការពន្យល់៖</span> <span id="rationaleText"></span>
+        </div>
+
+        <div class="navigation-buttons">
+            <button id="checkAnswerButton" class="nav-button">ពិនិត្យចម្លើយ</button>
+            <button id="showHintButton" class="nav-button">បង្ហាញជំនួយ</button>
+            <button id="nextQuestionButton" class="nav-button" disabled>សំណួរបន្ទាប់</button>
+        </div>
+
+        <div class="score-area" id="scoreArea" style="display: none;">
+            <!-- Score will be displayed here -->
+        </div>
+        <button id="restartQuizButton" class="nav-button restart-button" style="display: none;">ចាប់ផ្តើមសំណួរឡើងវិញ</button>
+    </div>
+
+    <script>
+        let quizQuestions = []; // This will hold the questions loaded dynamically
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedOption = null;
+        let quizCompleted = false;
+
+        const gradeSelect = document.getElementById('gradeSelect');
+        const questionTextElement = document.getElementById('questionText');
+        const answerOptionsElement = document.getElementById('answerOptions');
+        const hintAreaElement = document.getElementById('hintArea');
+        const hintTextElement = document.getElementById('hintText');
+        const feedbackAreaElement = document.getElementById('feedbackArea');
+        const rationaleTextElement = document.getElementById('rationaleText');
+        const checkAnswerButton = document.getElementById('checkAnswerButton');
+        const showHintButton = document.getElementById('showHintButton');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const scoreAreaElement = document.getElementById('scoreArea');
+        const restartQuizButton = document.getElementById('restartQuizButton');
+        const currentQuestionNumberSpan = document.getElementById('currentQuestionNumber');
+        const totalQuestionsSpan = document.getElementById('totalQuestions');
+
+        // Function to load quiz data dynamically
+        async function loadQuizData(grade) {
+            const scriptId = 'quiz-data-script';
+            let oldScript = document.getElementById(scriptId);
+            if (oldScript) {
+                oldScript.remove();
+            }
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.id = scriptId;
+                script.src = `physics_quiz_grade${grade}_data.js`; // This is the dynamic part
+                script.onload = () => {
+                    // Access quizQuestions from the global scope after script loads
+                    if (typeof window.quizQuestions !== 'undefined') {
+                        resolve(window.quizQuestions);
+                    } else {
+                        reject(new Error('quizQuestions array not found in loaded script.'));
+                    }
+                };
+                script.onerror = (e) => {
+                    console.error(`Error loading script: ${script.src}`, e);
+                    reject(new Error(`Failed to load quiz data for grade ${grade}. Please ensure 'physics_quiz_grade${grade}_data.js' is in the same folder as this HTML file.`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        async function initializeQuiz(grade) {
+            try {
+                // Temporarily disable buttons and show loading state
+                checkAnswerButton.disabled = true;
+                showHintButton.disabled = true;
+                nextQuestionButton.disabled = true;
+                questionTextElement.textContent = "កំពុងផ្ទុកសំណួរ...";
+                answerOptionsElement.innerHTML = '';
+                feedbackAreaElement.style.display = 'none';
+                hintAreaElement.style.display = 'none';
+                scoreAreaElement.style.display = 'none';
+                restartQuizButton.style.display = 'none';
+
+                const loadedQuestions = await loadQuizData(grade);
+                quizQuestions = loadedQuestions; // Assign loaded questions to the global variable
+
+                currentQuestionIndex = 0;
+                score = 0;
+                quizCompleted = false;
+                totalQuestionsSpan.textContent = quizQuestions.length;
+
+                displayQuestion();
+            } catch (error) {
+                console.error("Error initializing quiz:", error);
+                questionTextElement.textContent = `${error.message}`; // Display the specific error message
+                // Optionally show a more user-friendly error message
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex >= quizQuestions.length) {
+                endQuiz();
+                return;
+            }
+
+            const questionData = quizQuestions[currentQuestionIndex];
+            questionTextElement.innerHTML = questionData.question;
+            answerOptionsElement.innerHTML = '';
+            hintTextElement.textContent = questionData.hint;
+            feedbackAreaElement.style.display = 'none';
+            hintAreaElement.style.display = 'none';
+            checkAnswerButton.disabled = false;
+            showHintButton.disabled = false;
+            nextQuestionButton.disabled = true;
+            selectedOption = null;
+
+            currentQuestionNumberSpan.textContent = currentQuestionIndex + 1;
+
+            // Shuffle answer options for each question
+            const shuffledOptions = [...questionData.answerOptions];
+            shuffleArray(shuffledOptions);
+
+            shuffledOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button';
+                button.innerHTML = option.text; // Use innerHTML to render potential LaTeX
+                button.dataset.index = index; // Store original index for rationale
+                button.onclick = () => selectOption(button, option);
+                answerOptionsElement.appendChild(button);
+            });
+
+            // Re-render MathJax after injecting new content
+            if (window.MathJax) {
+                window.MathJax.typesetPromise([questionTextElement, answerOptionsElement]).catch((err) => console.error('MathJax typesetting error:', err));
+            }
+        }
+
+        function selectOption(button, optionData) {
+            if (selectedOption) {
+                selectedOption.classList.remove('selected');
+            }
+            selectedOption = button;
+            selectedOption.classList.add('selected');
+            // Store the selected option's data for checking
+            selectedOption.dataset.isCorrect = optionData.isCorrect;
+            selectedOption.dataset.rationale = optionData.rationale;
+        }
+
+        function checkAnswer() {
+            if (!selectedOption) {
+                feedbackAreaElement.style.display = 'block';
+                feedbackAreaElement.style.backgroundColor = '#fef3c7';
+                feedbackAreaElement.style.borderColor = '#f59e0b';
+                rationaleTextElement.textContent = 'សូមជ្រើសរើសចម្លើយមួយជាមុនសិន។';
+                return;
+            }
+
+            const isCorrect = selectedOption.dataset.isCorrect === 'true'; // Convert string to boolean
+            const rationale = selectedOption.dataset.rationale;
+
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                score++;
+            } else {
+                selectedOption.classList.add('incorrect');
+                // Find and highlight the correct answer
+                Array.from(answerOptionsElement.children).forEach(button => {
+                    const optionData = quizQuestions[currentQuestionIndex].answerOptions.find(opt => opt.text === button.innerHTML);
+                    if (optionData && optionData.isCorrect) {
+                        button.classList.add('correct');
+                    }
+                });
+            }
+
+            feedbackAreaElement.style.display = 'block';
+            feedbackAreaElement.style.backgroundColor = isCorrect ? '#d1fae5' : '#fee2e2';
+            feedbackAreaElement.style.borderColor = isCorrect ? '#10b981' : '#ef4444';
+            
+            // FIX: Use innerHTML for rationaleTextElement to allow MathJax to render LaTeX
+            rationaleTextElement.innerHTML = rationale; 
+            
+            // FIX: Tell MathJax to typeset the feedback area after updating its content
+            if (window.MathJax) {
+                window.MathJax.typesetPromise([feedbackAreaElement]).catch((err) => console.error('MathJax typesetting error:', err));
+            }
+
+            checkAnswerButton.disabled = true;
+            showHintButton.disabled = true; // Disable hint after checking
+            nextQuestionButton.disabled = false;
+
+            // Disable all option buttons after answer is checked
+            Array.from(answerOptionsElement.children).forEach(button => {
+                button.onclick = null;
+                button.style.cursor = 'default';
+            });
+        }
+
+        function showHint() {
+            hintAreaElement.style.display = 'block';
+            showHintButton.disabled = true; // Disable hint after showing
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function endQuiz() {
+            quizCompleted = true;
+            questionTextElement.style.display = 'none';
+            answerOptionsElement.style.display = 'none';
+            feedbackAreaElement.style.display = 'none';
+            hintAreaElement.style.display = 'none';
+            checkAnswerButton.style.display = 'none';
+            showHintButton.style.display = 'none';
+            nextQuestionButton.style.display = 'none';
+            document.getElementById('quizStatus').style.display = 'none';
+
+            scoreAreaElement.style.display = 'block';
+            scoreAreaElement.innerHTML = `អ្នកបានឆ្លើយត្រូវ ${score} ក្នុងចំណោម ${quizQuestions.length} សំណួរ។`;
+            restartQuizButton.style.display = 'block';
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            quizCompleted = false;
+            scoreAreaElement.style.display = 'none';
+            restartQuizButton.style.display = 'none';
+
+            questionTextElement.style.display = 'block';
+            answerOptionsElement.style.display = 'grid';
+            checkAnswerButton.style.display = 'block';
+            showHintButton.style.display = 'block';
+            nextQuestionButton.style.display = 'block';
+            document.getElementById('quizStatus').style.display = 'block';
+
+            displayQuestion();
+        }
+
+        // Event Listeners
+        checkAnswerButton.addEventListener('click', checkAnswer);
+        showHintButton.addEventListener('click', showHint);
+        nextQuestionButton.addEventListener('click', nextQuestion);
+        restartQuizButton.addEventListener('click', restartQuiz);
+        gradeSelect.addEventListener('change', (event) => initializeQuiz(event.target.value));
+
+        // Initial load
+        window.onload = () => {
+            initializeQuiz(gradeSelect.value); // Load the default selected grade (Grade 7)
+        };
+    </script>
+</body>
+</html>
